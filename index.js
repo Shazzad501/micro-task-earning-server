@@ -32,6 +32,17 @@ async function run() {
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
+    // all db collection
+    const usersCollection = client.db('MultiTaskDB').collection('users')
+
+
+
+    // user data posting api
+    app.post('/users', async(req, res)=>{
+      const user = req.body;
+      const result = await usersCollection.insertOne(user);
+      res.send(result);
+    })
     
   } finally {
     // Ensures that the client will close when you finish/error
