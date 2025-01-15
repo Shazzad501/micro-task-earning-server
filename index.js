@@ -2,7 +2,8 @@ require('dotenv').config()
 const express = require('express');
 const app = express();
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 const port = process.env.PORT || 5000;
 
 
@@ -34,6 +35,7 @@ async function run() {
 
     // all db collection
     const usersCollection = client.db('MultiTaskDB').collection('users')
+    const paymentCollection = client.db('MultiTaskDB').collection('pyments')
 
 
 
@@ -51,6 +53,55 @@ async function run() {
       const result = await usersCollection.findOne(filter)
       res.send(result);
     })
+
+
+    // buyer payment related api
+    app.post('/create-payment-intent', async(req, res)=>{
+      const {amount, userId} = req.body;
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount * 100,
+        currency: 'usd',
+        metadata: { userId },
+      })
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      })
+    })
+
+    // handle success full payment and update coins
+    app.post('/payment-success', async(req, res)=>{
+      const { paymentIntentId, userId} = req.body;
+
+      const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+      if(paymentIntent.status === 'succeeded'){
+        const amountPaid = paymentIntent.amount_received / 100;
+
+        const user = await usersCollection.findOne({_id: new ObjectId(userId)})
+        
+        if(user){
+          const newCoinBalance = user.totalCoin + amountPaid * 10;
+          await usersCollection.updateOne(
+            {_id: new ObjectId(userId)},
+            { $set: { totalCoin: newCoinBalance } }
+          );
+
+          // save payment info into the payment collection
+          const paymentInfo ={
+            userId,
+            amount: amountPaid,
+            coinsAdded: amountPaid * 10,
+            date: new Date(),
+          }
+          await paymentCollection.insertOne(paymentInfo);
+          res.send({ success: true, message: 'Payment successful and coins updated!' });
+        }
+        else {
+            res.status(404).send({ success: false, message: 'User not found!' });
+          }
+      }
+    })
+
     
   } finally {
     // Ensures that the client will close when you finish/error
