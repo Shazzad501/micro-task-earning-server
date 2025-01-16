@@ -104,6 +104,13 @@ async function run() {
       res.send(result);
     })
 
+    // get task match by buyer email
+    app.get('/task/:email', verifyToken, async(req, res)=>{
+      const email = req.params.email;
+      const filter = {buyerEmail: email};
+      const result = await tasksCollection.find(filter).toArray()
+      res.send(result);
+    })
 
     // buyer payment related api
     app.post('/create-payment-intent', async(req, res)=>{
