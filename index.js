@@ -105,10 +105,19 @@ async function run() {
     })
 
     // get task match by buyer email
-    app.get('/task/:email', verifyToken, async(req, res)=>{
+    app.get('/tasks/:email', verifyToken, async(req, res)=>{
       const email = req.params.email;
       const filter = {buyerEmail: email};
       const result = await tasksCollection.find(filter).sort({ completion_date: -1 }).toArray()
+      res.send(result);
+    })
+
+    // update a task 
+    app.patch('/tasks/:id', verifyToken, async(req, res)=>{
+      const id = req.params.id;
+      const updatedTask = req.body;
+      const filter = {_id: new ObjectId(id)}
+      const result = await tasksCollection.updateOne(filter, { $set: updatedTask });
       res.send(result);
     })
 
