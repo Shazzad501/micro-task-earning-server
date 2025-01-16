@@ -57,11 +57,11 @@ async function run() {
 
     // buyer payment related api
     app.post('/create-payment-intent', async(req, res)=>{
-      const {amount, userId} = req.body;
+      const {amount, buyerId} = req.body;
       const paymentIntent = await stripe.paymentIntents.create({
         amount: amount * 100,
         currency: 'usd',
-        metadata: { userId },
+        metadata: { buyerId },
       })
       res.send({
         clientSecret: paymentIntent.client_secret,
@@ -70,25 +70,28 @@ async function run() {
 
     // handle success full payment and update coins
     app.post('/payment-success', async(req, res)=>{
-      const { paymentIntentId, userId} = req.body;
+      const { paymentIntentId, buyerId, buyerName, buyerPhoto, buyerEmail} = req.body;
 
       const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
 
       if(paymentIntent.status === 'succeeded'){
         const amountPaid = paymentIntent.amount_received / 100;
 
-        const user = await usersCollection.findOne({_id: new ObjectId(userId)})
-        
+        const user = await usersCollection.findOne({_id: new ObjectId(buyerId)})
+
         if(user){
           const newCoinBalance = user.totalCoin + amountPaid * 10;
           await usersCollection.updateOne(
-            {_id: new ObjectId(userId)},
+            {_id: new ObjectId(buyerId)},
             { $set: { totalCoin: newCoinBalance } }
           );
 
           // save payment info into the payment collection
           const paymentInfo ={
-            userId,
+            buyerId,
+            buyerEmail,
+            buyerPhoto,
+            buyerName,
             amount: amountPaid,
             coinsAdded: amountPaid * 10,
             date: new Date(),
