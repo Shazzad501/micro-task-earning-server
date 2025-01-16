@@ -121,6 +121,24 @@ async function run() {
       res.send(result);
     })
 
+    // delete task and update  buyer coin
+    app.delete('/tasks/:id', async(req, res)=>{
+      const id = req.params.id;
+      const {userEmail} = req.body;
+      const task = await tasksCollection.findOne({_id: new ObjectId(id)})
+      const {required_workers, payable_amount} = task || {}
+      const returnCoin = parseInt(required_workers) * parseInt(payable_amount);
+
+      const deleteResult = await tasksCollection.deleteOne({_id: new ObjectId(id)});
+
+      const updateResult = await usersCollection.updateOne(
+        { userEmail: userEmail },
+        { $inc: { totalCoin: returnCoin } }
+      );
+
+      res.send([deleteResult, updateResult])
+    })
+
     // buyer payment related api
     app.post('/create-payment-intent', async(req, res)=>{
       const {amount, buyerId} = req.body;
