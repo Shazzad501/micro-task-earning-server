@@ -2,7 +2,7 @@ require('dotenv').config()
 const express = require('express');
 const app = express();
 const cors = require('cors');
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId, Transaction } = require('mongodb');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 const port = process.env.PORT || 5000;
 
@@ -92,6 +92,7 @@ async function run() {
             buyerEmail,
             buyerPhoto,
             buyerName,
+            transactionId: paymentIntentId,
             amount: amountPaid,
             coinsAdded: amountPaid * 10,
             date: new Date(),
@@ -103,6 +104,14 @@ async function run() {
             res.status(404).send({ success: false, message: 'User not found!' });
           }
       }
+    })
+
+    // get buyer paymet history by buyer id
+    app.get('/payments/:id', async(req, res)=>{
+      const id = req.params.id;
+      const filter = {buyerId: id};
+      const result = await paymentCollection.find(filter).toArray();
+      res.send(result);
     })
 
     
