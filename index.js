@@ -2,6 +2,7 @@ require('dotenv').config()
 const express = require('express');
 const app = express();
 const cors = require('cors');
+const jwt = require('jsonwebtoken')
 const { MongoClient, ServerApiVersion, ObjectId, Transaction } = require('mongodb');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 const port = process.env.PORT || 5000;
@@ -36,7 +37,33 @@ async function run() {
     // all db collection
     const usersCollection = client.db('MultiTaskDB').collection('users')
     const paymentCollection = client.db('MultiTaskDB').collection('pyments')
+    const tasksCollection = client.db('MultiTaskDB').collection('tasks')
 
+
+    // jwt token related api
+    app.post('/jwt', async(req, res)=>{
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '2h'});
+      res.send({token})
+    })
+
+
+    // verify jwt token
+    const verifyToken = (req, res, next)=>{
+      // console.log('Inside verify token',req.headers.authorization)
+      if(!req.headers.authorization){
+        return res.status(401).send({message: 'Unauthorized Access'})
+      }
+      const token = req.headers.authorization.split(' ')[1];
+      jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) =>{
+        if(err){
+          return res.status(401).send({message: 'Unauthorized Access'})
+        }
+        req.decoded = decoded;
+        next()
+      })
+      // next()
+    }
 
 
     // user data posting api
@@ -51,6 +78,29 @@ async function run() {
       const email = req.params.email;
       const filter = {userEmail: email};
       const result = await usersCollection.findOne(filter)
+      res.send(result);
+    })
+
+    // buyer add task api
+    app.post('/tasks',verifyToken, async(req, res)=>{
+      const task = req.body;
+      const {buyerEmail, totalPayableCoin} = task || {}
+      const user = await usersCollection.findOne({userEmail: buyerEmail})
+      const {totalCoin} = user || {}
+      if(!user){
+        res.status(404).send({ success: false, message: 'User not found!' })
+      }
+      if (totalCoin < totalPayableCoin) {
+      return res.status(400).send({ success: false, message: 'Insufficient coins!' });
+      }
+
+      const newCoinBalance = totalCoin - totalPayableCoin;
+      await usersCollection.updateOne(
+        { userEmail: buyerEmail },
+        { $set: { totalCoin: newCoinBalance } }
+      );
+
+      const result = await tasksCollection.insertOne(task);
       res.send(result);
     })
 
@@ -107,7 +157,7 @@ async function run() {
     })
 
     // get buyer paymet history by buyer id
-    app.get('/payments/:id', async(req, res)=>{
+    app.get('/payments/:id', verifyToken, async(req, res)=>{
       const id = req.params.id;
       const filter = {buyerId: id};
       const result = await paymentCollection.find(filter).toArray();
