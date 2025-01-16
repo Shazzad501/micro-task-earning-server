@@ -108,7 +108,7 @@ async function run() {
     app.get('/task/:email', verifyToken, async(req, res)=>{
       const email = req.params.email;
       const filter = {buyerEmail: email};
-      const result = await tasksCollection.find(filter).toArray()
+      const result = await tasksCollection.find(filter).sort({ completion_date: -1 }).toArray()
       res.send(result);
     })
 
@@ -167,7 +167,7 @@ async function run() {
     app.get('/payments/:id', verifyToken, async(req, res)=>{
       const id = req.params.id;
       const filter = {buyerId: id};
-      const result = await paymentCollection.find(filter).toArray();
+      const result = await paymentCollection.find(filter).sort({date: -1}).toArray();
       res.send(result);
     })
 
