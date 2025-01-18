@@ -198,6 +198,22 @@ async function run() {
       res.send(result);
     })
 
+
+    // get all task where requierd worker > 0 for a worker
+    app.get('/tasks', async(req, res)=>{
+      const filter = { 
+        $expr: { 
+          $gt: [ 
+            { $toInt: "$required_workers" }, // Convert string to integer
+            0 
+          ] 
+        } 
+      };
+      const result = await tasksCollection.find(filter).sort({ completion_date: -1 }).toArray();
+      res.send(result);
+    })
+
+
     
   } finally {
     // Ensures that the client will close when you finish/error
