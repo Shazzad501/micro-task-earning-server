@@ -55,8 +55,10 @@ async function run() {
         return res.status(401).send({message: 'Unauthorized Access'})
       }
       const token = req.headers.authorization.split(' ')[1];
+      // console.log('receive toke', token)
       jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) =>{
         if(err){
+          console.error('JWT Verification Error:', err);
           return res.status(401).send({message: 'Unauthorized Access'})
         }
         req.decoded = decoded;
@@ -200,7 +202,7 @@ async function run() {
 
 
     // get all task where requierd worker > 0 for a worker
-    app.get('/tasks', async(req, res)=>{
+    app.get('/tasks',verifyToken, async(req, res)=>{
       const filter = { 
         $expr: { 
           $gt: [ 
@@ -210,6 +212,14 @@ async function run() {
         } 
       };
       const result = await tasksCollection.find(filter).sort({ completion_date: -1 }).toArray();
+      res.send(result);
+    })
+
+    // get a one spacific task by using task id for worker
+    app.get('/tasks/:id',verifyToken, async(req, res)=>{
+      const taskId = req.params.id;
+      const filter = {_id: new ObjectId(taskId)};
+      const result = await tasksCollection.findOne(filter)
       res.send(result);
     })
 
