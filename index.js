@@ -78,6 +78,20 @@ async function run() {
       res.send(result);
     })
 
+    // get all user for admin
+    app.get('/users', verifyToken, async(req, res)=>{
+      const result  = await usersCollection.find().toArray();
+      res.send(result);
+    })
+
+    // delete user by id
+    app.delete('/users/:id', verifyToken, async(req, res)=>{
+      const id = req.params.id;
+      const filter = {_id: new ObjectId(id)};
+      const result = await usersCollection.deleteOne(filter);
+      res.send(result);
+    })
+
     // get spacific user match by email
     app.get('/users/:email', async(req, res)=>{
       const email = req.params.email;
