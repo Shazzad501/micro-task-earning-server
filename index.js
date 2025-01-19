@@ -38,6 +38,8 @@ async function run() {
     const usersCollection = client.db('MultiTaskDB').collection('users')
     const paymentCollection = client.db('MultiTaskDB').collection('pyments')
     const tasksCollection = client.db('MultiTaskDB').collection('tasks')
+    const reviewCollection = client.db('MultiTaskDB').collection('reviews')
+     
 
 
     // jwt token related api
@@ -80,6 +82,12 @@ async function run() {
       const email = req.params.email;
       const filter = {userEmail: email};
       const result = await usersCollection.findOne(filter)
+      res.send(result);
+    })
+
+    // get all reviews api
+    app.get('/reviews', async(req, res)=>{
+      const result = await reviewCollection.find().toArray()
       res.send(result);
     })
 
@@ -216,10 +224,10 @@ async function run() {
     })
 
     // get a one spacific task by using task id for worker
-    app.get('/tasks/:id',verifyToken, async(req, res)=>{
+    app.get('/tasks/:id', verifyToken, async(req, res)=>{
       const taskId = req.params.id;
-      const filter = {_id: new ObjectId(taskId)};
-      const result = await tasksCollection.findOne(filter)
+      const filter = { _id: new ObjectId(taskId) };
+      const result = await tasksCollection.findOne(filter);
       res.send(result);
     })
 
