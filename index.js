@@ -40,7 +40,7 @@ async function run() {
     const tasksCollection = client.db('MultiTaskDB').collection('tasks');
     const reviewCollection = client.db('MultiTaskDB').collection('reviews');
     const submissionCollection = client.db('MultiTaskDB').collection('submission');
-     
+    const withdrawCollection = client.db('MultiTaskDB').collection('withdraw');
 
 
     // jwt token related api
@@ -239,11 +239,18 @@ async function run() {
       res.send(result);
     })
 
-    // get all task by using worker email
+    // get all submission task by using worker email
     app.get('/submission/:email', verifyToken, async(req, res)=>{
       const email = req.params.email;
       const filter = { worker_email: email };
       const result = await submissionCollection.find(filter).sort({current_date: -1}).toArray();
+      res.send(result);
+    })
+
+    // worker withdraw request post api
+    app.post('/withdrawals', verifyToken, async(req, res)=>{
+      const withdrawData = req.body;
+      const result = await withdrawCollection.insertOne(withdrawData);
       res.send(result);
     })
     
