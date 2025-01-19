@@ -253,6 +253,14 @@ async function run() {
       const result = await withdrawCollection.insertOne(withdrawData);
       res.send(result);
     })
+
+    // get all pending withdraw req for admin
+    app.get('/withdrawals', verifyToken, async(req, res)=>{
+      const currentStatus = 'pending';
+      const filter = { status: currentStatus }
+      const result = await withdrawCollection.find(filter).toArray();
+      res.send(result);
+    })
     
   } finally {
     // Ensures that the client will close when you finish/error
