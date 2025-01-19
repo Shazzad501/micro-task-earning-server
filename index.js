@@ -92,6 +92,15 @@ async function run() {
       res.send(result);
     })
 
+    // user role update api
+    app.put('/updaterole/:id', verifyToken, async(req, res)=>{
+      const id = req.params.id;
+      const {role} = req.body;
+      const filter = {_id: new ObjectId(id)};
+      const result = await usersCollection.updateOne(filter, { $set: { role } })
+      res.send(result)
+    })
+
     // get spacific user match by email
     app.get('/users/:email', async(req, res)=>{
       const email = req.params.email;
