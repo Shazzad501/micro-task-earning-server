@@ -35,10 +35,11 @@ async function run() {
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
     // all db collection
-    const usersCollection = client.db('MultiTaskDB').collection('users')
-    const paymentCollection = client.db('MultiTaskDB').collection('pyments')
-    const tasksCollection = client.db('MultiTaskDB').collection('tasks')
-    const reviewCollection = client.db('MultiTaskDB').collection('reviews')
+    const usersCollection = client.db('MultiTaskDB').collection('users');
+    const paymentCollection = client.db('MultiTaskDB').collection('pyments');
+    const tasksCollection = client.db('MultiTaskDB').collection('tasks');
+    const reviewCollection = client.db('MultiTaskDB').collection('reviews');
+    const submissionCollection = client.db('MultiTaskDB').collection('submission');
      
 
 
@@ -231,7 +232,12 @@ async function run() {
       res.send(result);
     })
 
-
+    // post a submission into db for a worker
+    app.post('/submission', verifyToken, async(req, res)=>{
+      const submitTask = req.body;
+      const result  = await submissionCollection.insertOne(submitTask);
+      res.send(result);
+    })
     
   } finally {
     // Ensures that the client will close when you finish/error
