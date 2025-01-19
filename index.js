@@ -161,7 +161,7 @@ async function run() {
       res.send(result);
     })
 
-    // delete task and update  buyer coin
+    // delete task and update  buyer coin for buyer
     app.delete('/tasks/:id', async(req, res)=>{
       const id = req.params.id;
       const {userEmail} = req.body;
@@ -177,6 +177,14 @@ async function run() {
       );
 
       res.send([deleteResult, updateResult])
+    })
+
+    // delete task api for admin
+    app.delete('/admindeletetask/:id', verifyToken, async(req, res)=>{
+      const id = req.params.id;
+      const filter = {_id: new ObjectId(id)};
+      const result = await tasksCollection.deleteOne(filter);
+      res.send(result);
     })
 
     // buyer payment related api
