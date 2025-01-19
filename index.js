@@ -224,7 +224,7 @@ async function run() {
     })
 
     // get a one spacific task by using task id for worker
-    app.get('/tasks/:id', verifyToken, async(req, res)=>{
+    app.get('/singletasks/:id', verifyToken, async(req, res)=>{
       const taskId = req.params.id;
       const filter = { _id: new ObjectId(taskId) };
       const result = await tasksCollection.findOne(filter);
