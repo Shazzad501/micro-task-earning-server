@@ -138,6 +138,12 @@ async function run() {
       res.send(result);
     })
 
+    // get all task for admin
+    app.get('/tasks', verifyToken, async(req, res)=>{
+      const result = await tasksCollection.find().toArray();
+      res.send(result)
+    })
+
     // get task match by buyer email
     app.get('/tasks/:email', verifyToken, async(req, res)=>{
       const email = req.params.email;
