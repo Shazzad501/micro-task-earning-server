@@ -238,6 +238,14 @@ async function run() {
       const result  = await submissionCollection.insertOne(submitTask);
       res.send(result);
     })
+
+    // get all task by using worker email
+    app.get('/submission/:email', verifyToken, async(req, res)=>{
+      const email = req.params.email;
+      const filter = { worker_email: email };
+      const result = await submissionCollection.find(filter).sort({current_date: -1}).toArray();
+      res.send(result);
+    })
     
   } finally {
     // Ensures that the client will close when you finish/error
