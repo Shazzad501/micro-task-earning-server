@@ -388,8 +388,8 @@ async function run() {
       res.send([updateWithdrawalResult, updateUserCoinsResult])
     })
 
-    // buyer stats
-    app.get('/buyer-stats/:email', async(req, res)=>{
+    // buyer states
+    app.get('/buyer-stats/:email', verifyToken, async(req, res)=>{
       const buyerEmail = req.params.email;
 
       const totalTaskCount = await tasksCollection.countDocuments({buyerEmail});
@@ -421,6 +421,34 @@ async function run() {
           },
         })
     })
+
+    // worker states
+    app.get('worker-stats/:email', async(req, res)=>{
+      const workerEmail = req.params.email;
+      console.log('Email', workerEmail)
+      // get total submission
+      const totalSubmissions = await submissionCollection.countDocuments({ worker_email: workerEmail });
+
+      // get total pending submission
+      const totalPendingSubmissions = await submissionCollection.countDocuments({ worker_email: workerEmail });
+
+      // get total income
+      const totalEarnings = await submissionCollection.aggregate([
+        { $match: { worker_email: workerEmail, status: 'approved' } },
+        { $group: { _id: null, totalAmount: { $sum: { $toInt: "$payable_amount" } } } },
+      ]).toArray();
+
+      const earnings = totalEarnings[0]?.totalAmount || 0;
+
+     res.send({
+      status: "success",
+      stats: {
+        totalSubmissions,
+        totalPendingSubmissions,
+        totalEarnings: earnings
+      },
+     });
+    });
     
   } finally {
     // Ensures that the client will close when you finish/error
