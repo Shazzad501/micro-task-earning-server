@@ -387,6 +387,40 @@ async function run() {
 
       res.send([updateWithdrawalResult, updateUserCoinsResult])
     })
+
+    // buyer stats
+    app.get('/buyer-stats/:email', async(req, res)=>{
+      const buyerEmail = req.params.email;
+
+      const totalTaskCount = await tasksCollection.countDocuments({buyerEmail});
+
+      // get pending task worker
+      const tasks = await tasksCollection.find({buyerEmail}).project({ required_workers: 
+        1 }).toArray();
+      
+        const pendingWorkers = tasks.reduce((sum, task)=>{
+          const workers = parseInt(task.required_workers, 10) || 0;
+          return sum + workers
+        }, 0);
+
+        // get total payment
+
+        const totalPyment = await paymentCollection.aggregate([
+          { $match: {buyerEmail} },
+          { $group: {_id: null, totalAmount: { $sum: "$amount" }} },
+        ]).toArray();
+
+        const totalPaid = totalPyment[0]?.totalAmount || 0;
+
+        res.send({
+          success: true,
+          stats: {
+            totalTaskCount,
+            pendingWorkers,
+            totalPaid,
+          },
+        })
+    })
     
   } finally {
     // Ensures that the client will close when you finish/error
