@@ -482,6 +482,12 @@ async function run() {
     });
     })
 
+    // ure top worker 
+    app.get('/top-workers', verifyToken, async(req, res)=>{
+      const topWorker = await usersCollection.find({ role: 'worker' }).sort({totalCoin: -1}).limit(6).project({ name: 1, userPhoto: 1, totalCoin: 1 }).toArray();
+      res.send(topWorker)
+    });
+
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
