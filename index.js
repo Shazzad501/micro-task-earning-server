@@ -272,8 +272,21 @@ async function run() {
     // post a submission into db for a worker
     app.post('/submission', verifyToken, async(req, res)=>{
       const submitTask = req.body;
-      const result  = await submissionCollection.insertOne(submitTask);
-      res.send(result);
+      const {task_id} = submitTask;
+      const updateRquiredWorker = await tasksCollection.updateOne(
+        { _id: new ObjectId(task_id)},
+        [
+          {
+            $set: {
+              required_workers: {
+                $toString: { $subtract: [{ $toInt: "$required_workers" }, 1] },
+              },
+            },
+          },
+        ]
+      )
+      const postResult  = await submissionCollection.insertOne(submitTask);
+      res.send([postResult, updateRquiredWorker]);
     })
 
     // get all submission task by using worker email
@@ -291,6 +304,24 @@ async function run() {
       const result = await submissionCollection.find(filter).sort({current_date: -1}).toArray();
       res.send(result);
     })
+
+    // approve submission api
+    app.put('/submission/approve/:id', verifyToken, async(req, res)=>{
+      const id = req.params.id;
+      const {workerEmail, amount} = req.body;
+
+      const updateSubmissionResult = await submissionCollection.updateOne(
+        { _id: new ObjectId(id)},
+        { $set: { status : 'approved' }}
+      );
+
+      // update worker coin
+      const updateWorkerCoinResult = await usersCollection.updateOne(
+        { userEmail: workerEmail},
+        {$inc: { totalCoin: amount }}
+      );
+      res.send([updateSubmissionResult, updateWorkerCoinResult])
+    });
 
     // worker withdraw request post api
     app.post('/withdrawals', verifyToken, async(req, res)=>{
