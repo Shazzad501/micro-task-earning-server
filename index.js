@@ -284,6 +284,14 @@ async function run() {
       res.send(result);
     })
 
+    // get all sumission task by using buyer email
+    app.get('/submissionbuyer/:email', verifyToken, async(req, res)=>{
+      const buyerMail = req.params.email;
+      const filter = { Buyer_email: buyerMail };
+      const result = await submissionCollection.find(filter).sort({current_date: -1}).toArray();
+      res.send(result);
+    })
+
     // worker withdraw request post api
     app.post('/withdrawals', verifyToken, async(req, res)=>{
       const withdrawData = req.body;
