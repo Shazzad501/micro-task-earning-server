@@ -363,6 +363,30 @@ async function run() {
       const result = await withdrawCollection.find(filter).toArray();
       res.send(result);
     })
+
+    // approve withdraw api
+    app.patch('/withdrawals/:id', verifyToken, async(req, res)=>{
+      const withdrawId = req.params.id;
+
+      // get withdrawal
+      const withdrawal = await withdrawCollection.findOne({ _id: new ObjectId(withdrawId) });
+
+      const { worker_email, withdrawal_coin } = withdrawal;
+
+      // Update withdrawal request status to "approved"
+      const updateWithdrawalResult = await withdrawCollection.updateOne(
+        { _id: new ObjectId(withdrawId) },
+        { $set: { status: 'approved' } }
+      );
+
+      // Deduct withdrawal coins from user
+      const updateUserCoinsResult = await usersCollection.updateOne(
+        { userEmail: worker_email },
+        { $inc: { totalCoin: -withdrawal_coin } }
+      );
+
+      res.send([updateWithdrawalResult, updateUserCoinsResult])
+    })
     
   } finally {
     // Ensures that the client will close when you finish/error
