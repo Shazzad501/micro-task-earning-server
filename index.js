@@ -423,7 +423,7 @@ async function run() {
     })
 
     // worker states
-    app.get('worker-stats/:email', async(req, res)=>{
+    app.get('/worker-stats/:email', async(req, res)=>{
       const workerEmail = req.params.email;
       console.log('Email', workerEmail)
       // get total submission
@@ -441,7 +441,7 @@ async function run() {
       const earnings = totalEarnings[0]?.totalAmount || 0;
 
      res.send({
-      status: "success",
+      success: true,
       stats: {
         totalSubmissions,
         totalPendingSubmissions,
@@ -450,6 +450,38 @@ async function run() {
      });
     });
     
+
+    // admin stats
+    app.get('/admin-stats',verifyToken, async(req, res)=>{
+      // Total workers count
+      const totalWorkers = await usersCollection.countDocuments({ role: 'worker' });
+
+      // Total buyers count
+      const totalBuyers = await usersCollection.countDocuments({ role: 'buyer' });
+
+      // Total available coins (sum of all users' coins)
+      const totalAvailableCoins = await usersCollection.aggregate([
+        { $group: { _id: null, totalCoins: { $sum: "$totalCoin" } } }
+      ]).toArray();
+      const availableCoins = totalAvailableCoins[0]?.totalCoins || 0;
+
+      // Total payments (sum of all payments)
+      const totalPayments = await paymentCollection.aggregate([
+        { $group: { _id: null, totalAmount: { $sum: "$amount" } } }
+      ]).toArray();
+      const totalPaid = totalPayments[0]?.totalAmount || 0;
+
+      res.send({
+        success: true,
+        stats: {
+          totalWorkers,
+          totalBuyers,
+          totalAvailableCoins: availableCoins,
+          totalPayments: totalPaid,
+        },
+    });
+    })
+
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
