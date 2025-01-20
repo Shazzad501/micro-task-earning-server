@@ -323,6 +323,32 @@ async function run() {
       res.send([updateSubmissionResult, updateWorkerCoinResult])
     });
 
+    // submission reject api
+    app.put('/submission/reject/:id', verifyToken, async(req, res)=>{
+      const id = req.params.id;
+      const {taskId} = req.body;
+
+      const updateSubmissionResult = await submissionCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { status: 'rejected' } }
+      );
+
+       // Increase `required_workers` count for the task
+    const updateTaskResult = await tasksCollection.updateOne(
+      { _id: new ObjectId(taskId) },
+      [
+        {
+          $set: {
+            required_workers: {
+              $toString: { $add: [{ $toInt: "$required_workers" }, 1] },
+            },
+          },
+        },
+      ]
+    );
+    res.send([updateSubmissionResult, updateTaskResult]);
+    })
+
     // worker withdraw request post api
     app.post('/withdrawals', verifyToken, async(req, res)=>{
       const withdrawData = req.body;
