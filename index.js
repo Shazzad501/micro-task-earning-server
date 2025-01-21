@@ -202,7 +202,7 @@ async function run() {
 
     // handle success full payment and update coins
     app.post('/payment-success', async(req, res)=>{
-      const { paymentIntentId, buyerId, buyerName, buyerPhoto, buyerEmail} = req.body;
+      const { paymentIntentId, buyerId, buyerName, buyerPhoto, buyerEmail, adableCoin} = req.body;
 
       const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
 
@@ -212,7 +212,7 @@ async function run() {
         const user = await usersCollection.findOne({_id: new ObjectId(buyerId)})
 
         if(user){
-          const newCoinBalance = user.totalCoin + amountPaid * 10;
+          const newCoinBalance = user.totalCoin + adableCoin;
           await usersCollection.updateOne(
             {_id: new ObjectId(buyerId)},
             { $set: { totalCoin: newCoinBalance } }
@@ -405,9 +405,9 @@ async function run() {
 
         // get total payment
 
-        const totalPyment = await paymentCollection.aggregate([
+        const totalPyment = await tasksCollection.aggregate([
           { $match: {buyerEmail} },
-          { $group: {_id: null, totalAmount: { $sum: "$amount" }} },
+          { $group: {_id: null, totalAmount: { $sum: "$totalPayableCoin" }} },
         ]).toArray();
 
         const totalPaid = totalPyment[0]?.totalAmount || 0;
@@ -430,7 +430,9 @@ async function run() {
       const totalSubmissions = await submissionCollection.countDocuments({ worker_email: workerEmail });
 
       // get total pending submission
-      const totalPendingSubmissions = await submissionCollection.countDocuments({ worker_email: workerEmail });
+      const totalPendingSubmissions = await submissionCollection.countDocuments({         worker_email: workerEmail,
+        status: 'pending'
+       });
 
       // get total income
       const totalEarnings = await submissionCollection.aggregate([
