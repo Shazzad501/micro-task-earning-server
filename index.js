@@ -226,7 +226,7 @@ async function run() {
             buyerName,
             transactionId: paymentIntentId,
             amount: amountPaid,
-            coinsAdded: amountPaid * 10,
+            coinsAdded: adableCoin,
             date: new Date(),
           }
           await paymentCollection.insertOne(paymentInfo);
@@ -405,9 +405,9 @@ async function run() {
 
         // get total payment
 
-        const totalPyment = await tasksCollection.aggregate([
+        const totalPyment = await paymentCollection.aggregate([
           { $match: {buyerEmail} },
-          { $group: {_id: null, totalAmount: { $sum: "$totalPayableCoin" }} },
+          { $group: {_id: null, totalAmount: { $sum: "$coinsAdded" }} },
         ]).toArray();
 
         const totalPaid = totalPyment[0]?.totalAmount || 0;
