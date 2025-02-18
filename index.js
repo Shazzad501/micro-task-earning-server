@@ -7,9 +7,15 @@ const { MongoClient, ServerApiVersion, ObjectId, Transaction } = require('mongod
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 const port = process.env.PORT || 5000;
 
+const corsOptions = {
+  origin: "https://multi-task-earning.web.app",
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization"]
+};
 
 // middel ware
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 
 
@@ -61,13 +67,13 @@ async function run() {
       // console.log('receive toke', token)
       jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) =>{
         if(err){
-          console.error('JWT Verification Error:', err);
+          // console.error('JWT Verification Error:', err);
           return res.status(401).send({message: 'Unauthorized Access'})
         }
         req.decoded = decoded;
         next()
       })
-      // next()
+
     }
 
 
@@ -80,8 +86,8 @@ async function run() {
 
     // update user data
     app.put('/profileUpdate/:id', verifyToken, async(req, res)=>{
-      const {id} = req.params.id;
-      const {name, photo} = req.body;
+      const id = req.params.id;
+      const {name, userPhoto:photo} = req.body;
       const result = await usersCollection.updateOne(
         { _id: new ObjectId(id) },
         { $set: { name, userPhoto } }
