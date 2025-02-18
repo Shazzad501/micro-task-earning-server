@@ -87,13 +87,13 @@ async function run() {
     // update user data
     app.put('/profileUpdate/:id', verifyToken, async(req, res)=>{
       const id = req.params.id;
-      const {name, photo} = req.body;
+      const {name, userPhoto} = req.body;
       const result = await usersCollection.updateOne(
         { _id: new ObjectId(id) },
-        { $set: { name, userPhoto: photo } }
+        { $set: { name, userPhoto} }
       );
 
-      res.send(result)
+      res.send(result);
     });
 
     // get all user for admin
