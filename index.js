@@ -56,23 +56,24 @@ async function run() {
 
 
     // verify jwt token
-    const verifyToken = (req, res, next)=>{
-      // console.log('Inside verify token',req.headers.authorization)
-      if(!req.headers.authorization){
-        return res.status(401).send({message: 'Unauthorized Access'})
+    const verifyToken = (req, res, next) => {
+      res.header("Access-Control-Allow-Origin", "*");
+      res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+    
+      if (!req.headers.authorization) {
+        return res.status(401).send({ message: 'Unauthorized Access' });
       }
       const token = req.headers.authorization.split(' ')[1];
-      // console.log('receive toke', token)
-      jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) =>{
-        if(err){
-          console.error('JWT Verification Error:', err);
-          return res.status(401).send({message: 'Unauthorized Access'})
+    
+      jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+        if (err) {
+          return res.status(401).send({ message: 'Unauthorized Access' });
         }
         req.decoded = decoded;
-        next()
-      })
-      // next()
-    }
+        next();
+      });
+    };
+    
 
 
     // user data posting api
