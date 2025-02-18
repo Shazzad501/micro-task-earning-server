@@ -87,10 +87,10 @@ async function run() {
     // update user data
     app.put('/profileUpdate/:id', verifyToken, async(req, res)=>{
       const id = req.params.id;
-      const {name, userPhoto:photo} = req.body;
+      const {name, photo} = req.body;
       const result = await usersCollection.updateOne(
         { _id: new ObjectId(id) },
-        { $set: { name, userPhoto } }
+        { $set: { name, userPhoto: photo } }
       );
 
       res.send(result)
