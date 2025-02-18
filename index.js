@@ -10,10 +10,9 @@ const port = process.env.PORT || 5000;
 
 // middel ware
 app.use(cors({
-  origin: ['http://localhost:5173', 'https://multi-task-earning.web.app'],
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
+  origin: '*', 
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 
