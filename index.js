@@ -46,7 +46,7 @@ async function run() {
     // jwt token related api
     app.post('/jwt', async(req, res)=>{
       const user = req.body;
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '2h'});
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '24h'});
       res.send({token})
     })
 
@@ -80,7 +80,7 @@ async function run() {
 
     // update user data
     app.put('/profileUpdate/:id', verifyToken, async(req, res)=>{
-      const id = req.params.id;
+      const {id} = req.params.id;
       const {name, photo} = req.body;
       const result = await usersCollection.updateOne(
         { _id: new ObjectId(id) },
